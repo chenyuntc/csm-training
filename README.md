@@ -1,14 +1,9 @@
 # CSM
 
-**2025/03/13** - We are releasing the 1B CSM variant. The checkpoint is [hosted on Hugging Face](https://huggingface.co/sesame/csm_1b).
-
 ---
+This repo contains the code for fine-tuning and using the CSM model.
 
 CSM (Conversational Speech Model) is a speech generation model from [Sesame](https://www.sesame.com) that generates RVQ audio codes from text and audio inputs. The model architecture employs a [Llama](https://www.llama.com/) backbone and a smaller audio decoder that produces [Mimi](https://huggingface.co/kyutai/mimi) audio codes.
-
-A fine-tuned variant of CSM powers the [interactive voice demo](https://www.sesame.com/voicedemo) shown in our [blog post](https://www.sesame.com/research/crossing_the_uncanny_valley_of_voice).
-
-A hosted [Hugging Face space](https://huggingface.co/spaces/sesame/csm-1b) is also available for testing audio generation.
 
 ## Requirements
 
@@ -57,47 +52,9 @@ else:
 generator = load_csm_1b(device=device)
 
 audio = generator.generate(
-    text="我会说字正腔圆的普通话, 你好, 我是sesame,",
+    text="你好, 我是sesame,我会说字正腔圆的普通话",
     speaker=0,
     context=[],
-    max_audio_length_ms=10_000,
-)
-
-torchaudio.save("audio.wav", audio.unsqueeze(0).cpu(), generator.sample_rate)
-```
-
-CSM sounds best when provided with context. You can prompt or provide context to the model using a `Segment` for each speaker's utterance.
-
-```python
-speakers = [0]
-transcripts = [
-    "Hello from Sesame.",
-    # "Pretty good, pretty good.",
-    # "I'm great.",
-    # "So happy to be speaking to you.",
-]
-audio_paths = [
-    "./audio.wav",
-    # "utterance_1.wav",
-    # "utterance_2.wav",
-    # "utterance_3.wav",
-]
-
-def load_audio(audio_path):
-    audio_tensor, sample_rate = torchaudio.load(audio_path)
-    audio_tensor = torchaudio.functional.resample(
-        audio_tensor.squeeze(0), orig_freq=sample_rate, new_freq=generator.sample_rate
-    )
-    return audio_tensor
-
-segments = [
-    Segment(text=transcript, speaker=speaker, audio=load_audio(audio_path))
-    for transcript, speaker, audio_path in zip(transcripts, speakers, audio_paths)
-]
-audio = generator.generate(
-    text="Me too, this is some cool stuff huh?",
-    speaker=1,
-    context=segments,
     max_audio_length_ms=10_000,
 )
 
@@ -109,12 +66,9 @@ torchaudio.save("audio.wav", audio.unsqueeze(0).cpu(), generator.sample_rate)
 The `main.py` script provides an example of how to fine-tune the CSM model. It is currently configured to train on a Chinese dataset (`EmiliaIterableDataset`) using the `yycc/csm-1b-chinese` checkpoint as a base.
 
 ```bash
-# Ensure you have logged in via huggingface-cli and have access to yycc/csm-1b-chinese
 # Adjust parameters like NUM_GRAD_ACCUM, LR, batch_size in main.py as needed
-# The script uses Distributed Data Parallel (DDP)
-torchrun --standalone --nproc_per_node=gpu main.py
+torchrun  --nproc_per_node=4 main.py
 ```
-*Note: You will likely need multiple GPUs for efficient training.*
 
 ## FAQ
 

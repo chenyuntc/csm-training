@@ -18,7 +18,8 @@ A hosted [Hugging Face space](https://huggingface.co/spaces/sesame/csm-1b) is al
 * For some audio operations, `ffmpeg` may be required
 * Access to the following Hugging Face models:
   * [Llama-3.2-1B](https://huggingface.co/meta-llama/Llama-3.2-1B)
-  * [CSM-1B](https://huggingface.co/sesame/csm-1b)
+  * [CSM-1B](https://huggingface.co/sesame/csm-1b) (for English generation)
+  * [yycc/csm-1b-chinese](https://huggingface.co/yycc/csm-1b-chinese) (used in the provided training script)
 
 ### Setup
 
@@ -103,6 +104,18 @@ audio = generator.generate(
 torchaudio.save("audio.wav", audio.unsqueeze(0).cpu(), generator.sample_rate)
 ```
 
+## Training
+
+The `main.py` script provides an example of how to fine-tune the CSM model. It is currently configured to train on a Chinese dataset (`EmiliaIterableDataset`) using the `yycc/csm-1b-chinese` checkpoint as a base.
+
+```bash
+# Ensure you have logged in via huggingface-cli and have access to yycc/csm-1b-chinese
+# Adjust parameters like NUM_GRAD_ACCUM, LR, batch_size in main.py as needed
+# The script uses Distributed Data Parallel (DDP)
+torchrun --standalone --nproc_per_node=gpu main.py
+```
+*Note: You will likely need multiple GPUs for efficient training.*
+
 ## FAQ
 
 **Does this model come with any voices?**
@@ -115,7 +128,9 @@ CSM is trained to be an audio generation model and not a general-purpose multimo
 
 **Does it support other languages?**
 
-The model has some capacity for non-English languages due to data contamination in the training data, but it likely won't do well.
+The base `sesame/csm-1b` model has some capacity for non-English languages due to data contamination in the training data, but performance may vary.
+
+The provided `main.py` script demonstrates fine-tuning for Chinese using the `yycc/csm-1b-chinese` checkpoint and the `EmiliaIterableDataset`. You can adapt this script for other languages and datasets.
 
 ## Misuse and abuse ⚠️
 
